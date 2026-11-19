@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <glm/gtx/matrix_transform_2d.hpp>
+#include <complex>
 
 void keep_green_only(sil::Image &image) // Prend l'image par référence pour pouvoir la modifier
 {
@@ -312,51 +314,25 @@ void rosace(sil::Image &image)
 {
     int centre_xc = 250;
     int centre_yc = 250;
-
-    int centre_x = 200;
-    int centre_x1 = 150;
-    int centre_x2 = 200;
-    int centre_x3 = 300;
-    int centre_x4 = 350;
-    int centre_x5 = 300;
-    int centre_y = 335;
-    int centre_y1 = 250;
-    int centre_y2 = 165;
-    int centre_y3 = 165;
-    int centre_y4 = 250;
-    int centre_y5 = 335;
-    int rayon = 100;
+    int rayon = 50;
+    float pi = 3.14159265f;
     for (int x{0}; x < image.width(); x++)
     {
         for (int y{0}; y < image.height(); y++)
         {
-            if ((pow(x - centre_x, 2) + pow(y - centre_y, 2) < pow(rayon + 5, 2)) && (pow(x - centre_x, 2) + pow(y - centre_y, 2) > pow(rayon - 5, 2)))
+            if ((pow(x - centre_xc, 2) + pow(y - centre_yc, 2) < pow(rayon + 2, 2)) && (pow(x - centre_xc, 2) + pow(y - centre_yc, 2) > pow(rayon - 2, 2)))
             {
                 image.pixel(x, y) = glm::vec3{1, 1, 1};
             }
-            if ((pow(x - centre_x1, 2) + pow(y - centre_y1, 2) < pow(rayon + 5, 2)) && (pow(x - centre_x1, 2) + pow(y - centre_y1, 2) > pow(rayon - 5, 2)))
+            for (float angle = 0; angle < 2 * pi; angle += 2 * pi / 6)
             {
-                image.pixel(x, y) = glm::vec3{1, 1, 1};
-            }
-            if ((pow(x - centre_x2, 2) + pow(y - centre_y2, 2) < pow(rayon + 5, 2)) && (pow(x - centre_x2, 2) + pow(y - centre_y2, 2) > pow(rayon - 5, 2)))
-            {
-                image.pixel(x, y) = glm::vec3{1, 1, 1};
-            }
-            if ((pow(x - centre_x3, 2) + pow(y - centre_y3, 2) < pow(rayon + 5, 2)) && (pow(x - centre_x3, 2) + pow(y - centre_y3, 2) > pow(rayon - 5, 2)))
-            {
-                image.pixel(x, y) = glm::vec3{1, 1, 1};
-            }
-            if ((pow(x - centre_x4, 2) + pow(y - centre_y4, 2) < pow(rayon + 5, 2)) && (pow(x - centre_x4, 2) + pow(y - centre_y4, 2) > pow(rayon - 5, 2)))
-            {
-                image.pixel(x, y) = glm::vec3{1, 1, 1};
-            }
-            if ((pow(x - centre_x5, 2) + pow(y - centre_y5, 2) < pow(rayon + 5, 2)) && (pow(x - centre_x5, 2) + pow(y - centre_y5, 2) > pow(rayon - 5, 2)))
-            {
-                image.pixel(x, y) = glm::vec3{1, 1, 1};
-            }
-            if ((pow(x - centre_xc, 2) + pow(y - centre_yc, 2) < pow(rayon + 5, 2)) && (pow(x - centre_xc, 2) + pow(y - centre_yc, 2) > pow(rayon - 5, 2)))
-            {
-                image.pixel(x, y) = glm::vec3{1, 1, 1};
+                float centre_x = centre_xc + rayon * std::cos(angle);
+                float centre_y = centre_yc + rayon * std::sin(angle);
+
+                if ((pow(x - centre_x, 2) + pow(y - centre_y, 2) < pow(rayon + 2, 2)) && (pow(x - centre_x, 2) + pow(y - centre_y, 2) > pow(rayon - 2, 2)))
+                {
+                    image.pixel(x, y) = glm::vec3{1, 1, 1};
+                }
             }
         }
     }
@@ -388,51 +364,35 @@ void mosam(sil::Image &image)
     {
         for (int y{0}; y < image.height(); y++)
         {
-            for (int a{0}; a < 5; a += 2)
+            for (int a{0}; a < 5; a++)
             {
-                for (int b{0}; b < 5; b += 2)
+                for (int b{0}; b < 5; b++)
                 {
-                    copie.pixel(x + a * image.width(), y + b * image.height()) = image.pixel(x, y);
-                }
-            }
-        }
-    }
-    for (int x{0}; x < image.width(); x++)
-    {
-        for (int y{0}; y < image.height(); y++)
-        {
-            for (int a{1}; a < 5; a += 2)
-            {
-                for (int b{0}; b < 5; b += 2)
-                {
-                    copie.pixel(x + a * image.width(), y + b * image.height()) = image.pixel(image.width() - 1 - x, y);
-                }
-            }
-        }
-    }
-    for (int x{0}; x < image.width(); x++)
-    {
-        for (int y{0}; y < image.height(); y++)
-        {
-            for (int a{1}; a < 5; a += 2)
-            {
-                for (int b{1}; b < 5; b += 2)
-                {
-                    copie.pixel(x + a * image.width(), y + b * image.height()) = image.pixel(image.width() - 1 - x, image.height() - 1 - y);
-                    ;
-                }
-            }
-        }
-    }
-    for (int x{0}; x < image.width(); x++)
-    {
-        for (int y{0}; y < image.height(); y++)
-        {
-            for (int a{0}; a < 5; a += 2)
-            {
-                for (int b{1}; b < 5; b += 2)
-                {
-                    copie.pixel(x + a * image.width(), y + b * image.height()) = image.pixel(x, image.height() - 1 - y);
+                    // on definit les calculs nécéssaires pour inverser une image
+                    int x_inv;
+                    int y_inv;
+
+                    // si a est paire on a pas besoin d'inverse sinon si
+                    if (a % 2 == 0)
+                    {
+                        x_inv = x;
+                    }
+                    else
+                    {
+                        x_inv = image.width() - 1 - x;
+                    }
+
+                    // si b est paire on a pas besoin d'inverser sinon si
+                    if (b % 2 == 0)
+                    {
+                        y_inv = y;
+                    }
+                    else
+                    {
+                        y_inv = image.height() - 1 - y;
+                    }
+
+                    copie.pixel(x + a * image.width(), y + b * image.height()) = image.pixel(x_inv, y_inv);
                 }
             }
         }
@@ -464,7 +424,7 @@ void glitch(sil::Image &image)
 
 float somme_couleur(glm::vec3 color)
 {
-    int somme = color.x + color.y + color.z;
+    float somme = color.x + color.y + color.z;
     return (somme);
 }
 
@@ -490,7 +450,7 @@ void tri(sil::Image &image)
     for (int x{0}; x < image.width(); x++)
     {
         std::vector<int> tableau_couleur;
-        for (int y{0}; y < image.height() - 1; y++)
+        for (int y{0}; y < image.height(); y++)
         {
 
             for (int i{y}; i >= 0 && somme_couleur(image.pixel(x, i)) > somme_couleur(image.pixel(x, i + 1)); i--)
@@ -520,40 +480,26 @@ glm::vec3 calcul_distance(std::vector<glm::vec3> table)
     }
 }
 
-void k_means(sil::Image &image)
+sil::Image k_means(sil::Image &image)
 {
     // genere aléatoirement des pixels de départ pour faire des groupes autour
+    int nb_couleurs = 10;
     std::vector<glm::vec3> table_pixels;
-    for (int a{0}; a < 10; a++)
+    for (int a{0}; a < nb_couleurs; a++)
     {
         int Y = random_int(0, image.height() - 1);
         int X = random_int(0, image.width() - 1);
 
         table_pixels.push_back(image.pixel(X, Y));
     }
-    // tableaux pour mettre les vecteurs
-    std::vector<glm::vec3> groupe1;
-    std::vector<glm::vec3> groupe2;
-    std::vector<glm::vec3> groupe3;
-    std::vector<glm::vec3> groupe4;
-    std::vector<glm::vec3> groupe5;
-    std::vector<glm::vec3> groupe6;
-    std::vector<glm::vec3> groupe7;
-    std::vector<glm::vec3> groupe8;
-    std::vector<glm::vec3> groupe9;
-    std::vector<glm::vec3> groupe10;
-    for (int a{0}; a < 15; a++)
+    // tableau de 10 tableaux/groupes pour mettre des pixels dans chaque groupe après pour mettre les vecteurs
+    std::vector<std::vector<glm::vec3>> groupes(nb_couleurs);
+    for (int a{0}; a < 5; a++)
     {
-        groupe1.clear();
-        groupe2.clear();
-        groupe3.clear();
-        groupe4.clear();
-        groupe5.clear();
-        groupe6.clear();
-        groupe7.clear();
-        groupe8.clear();
-        groupe9.clear();
-        groupe10.clear();
+        for (int i{0}; i < nb_couleurs; i++)
+        {
+            groupes[i].clear();
+        }
         // on fait tous les groupes pixel par pixel
         for (int x{0}; x < image.width(); x++)
         {
@@ -571,71 +517,24 @@ void k_means(sil::Image &image)
                     table_distance.push_back(glm::distance(color1, colora));
                 }
                 // on compart les distance par rapport aux 3 pixels de référence pour les mettre dans les groupes correspondants
-                if (table_distance[0] <= table_distance[1] && table_distance[0] <= table_distance[2] && table_distance[0] <= table_distance[3]&& table_distance[0] <= table_distance[4]&& table_distance[0] <= table_distance[5]&& table_distance[0] <= table_distance[6]&& table_distance[0] <= table_distance[7]&& table_distance[0] <= table_distance[8]&& table_distance[0] <= table_distance[9])
+                int indice = 0;
+                for (int i{1}; i < nb_couleurs; i++)
                 {
-                    groupe1.push_back(image.pixel(x, y));
+                    if (table_distance[i] < table_distance[indice])
+                    {
+                        indice = i;
+                    }
                 }
-                else if (table_distance[1] <= table_distance[0] && table_distance[1] <= table_distance[2] && table_distance[1] <= table_distance[3]&& table_distance[1] <= table_distance[4]&& table_distance[1] <= table_distance[5]&& table_distance[1] <= table_distance[6]&& table_distance[1] <= table_distance[7]&& table_distance[1] <= table_distance[8]&& table_distance[1] <= table_distance[9])
-                {
-                    groupe2.push_back(image.pixel(x, y));
-                }
-                else if (table_distance[2] <= table_distance[1] && table_distance[2] <= table_distance[0] && table_distance[2] <= table_distance[3]&& table_distance[2] <= table_distance[4]&& table_distance[2] <= table_distance[5]&& table_distance[2] <= table_distance[6]&& table_distance[2] <= table_distance[7]&& table_distance[2] <= table_distance[8]&& table_distance[2] <= table_distance[9])
-                {
-                    groupe3.push_back(image.pixel(x, y));
-                }
-                else if (table_distance[3] <= table_distance[0] && table_distance[3] <= table_distance[1] && table_distance[3] <= table_distance[2]&& table_distance[3] <= table_distance[4]&& table_distance[3] <= table_distance[5]&& table_distance[3] <= table_distance[6]&& table_distance[3] <= table_distance[7]&& table_distance[3] <= table_distance[8]&& table_distance[3] <= table_distance[9])
-                {
-                    groupe4.push_back(image.pixel(x, y));
-                }
-                else if (table_distance[4] <= table_distance[0] && table_distance[4] <= table_distance[1] && table_distance[4] <= table_distance[2]&& table_distance[4] <= table_distance[3]&& table_distance[4] <= table_distance[5]&& table_distance[4] <= table_distance[6]&& table_distance[4] <= table_distance[7]&& table_distance[4] <= table_distance[8]&& table_distance[4] <= table_distance[9])
-                {
-                    groupe5.push_back(image.pixel(x, y));
-                }
-                else if (table_distance[5] <= table_distance[0] && table_distance[5] <= table_distance[1] && table_distance[5] <= table_distance[2]&& table_distance[5] <= table_distance[4]&& table_distance[5] <= table_distance[3]&& table_distance[5] <= table_distance[6]&& table_distance[5] <= table_distance[7]&& table_distance[5] <= table_distance[8]&& table_distance[5] <= table_distance[9])
-                {
-                    groupe6.push_back(image.pixel(x, y));
-                }
-                else if (table_distance[6] <= table_distance[0] && table_distance[6] <= table_distance[1] && table_distance[6] <= table_distance[2]&& table_distance[6] <= table_distance[4]&& table_distance[6] <= table_distance[5]&& table_distance[6] <= table_distance[3]&& table_distance[6] <= table_distance[7]&& table_distance[6] <= table_distance[8]&& table_distance[6] <= table_distance[9])
-                {
-                    groupe7.push_back(image.pixel(x, y));
-                }
-                else if (table_distance[7] <= table_distance[0] && table_distance[7] <= table_distance[1] && table_distance[7] <= table_distance[2]&& table_distance[7] <= table_distance[4]&& table_distance[7] <= table_distance[5]&& table_distance[7] <= table_distance[6]&& table_distance[7] <= table_distance[3]&& table_distance[7] <= table_distance[8]&& table_distance[7] <= table_distance[9])
-                {
-                    groupe8.push_back(image.pixel(x, y));
-                }
-                else if (table_distance[8] <= table_distance[0] && table_distance[8] <= table_distance[1] && table_distance[8] <= table_distance[2]&& table_distance[3] <= table_distance[4]&& table_distance[3] <= table_distance[5]&& table_distance[8] <= table_distance[6]&& table_distance[8] <= table_distance[7]&& table_distance[8] <= table_distance[3]&& table_distance[8] <= table_distance[9])
-                {
-                    groupe9.push_back(image.pixel(x, y));
-                }
-                else
-                {
-                    groupe10.push_back(image.pixel(x, y));
-                }
+                groupes[indice].push_back(image.pixel(x, y));
             }
         }
 
         // on a notre première division on doit déplacer le pixel de référence au centre du groupe
-        glm::vec3 moyenne_1 = calcul_distance(groupe1);
-        glm::vec3 moyenne_2 = calcul_distance(groupe2);
-        glm::vec3 moyenne_3 = calcul_distance(groupe3);
-        glm::vec3 moyenne_4 = calcul_distance(groupe4);
-        glm::vec3 moyenne_5 = calcul_distance(groupe5);
-        glm::vec3 moyenne_6 = calcul_distance(groupe6);
-        glm::vec3 moyenne_7 = calcul_distance(groupe7);
-        glm::vec3 moyenne_8 = calcul_distance(groupe8);
-        glm::vec3 moyenne_9 = calcul_distance(groupe9);
-        glm::vec3 moyenne_10 = calcul_distance(groupe10);
-
-        table_pixels[0] = moyenne_1;
-        table_pixels[1] = moyenne_2;
-        table_pixels[2] = moyenne_3;
-        table_pixels[3] = moyenne_4;
-        table_pixels[4] = moyenne_5;
-        table_pixels[5] = moyenne_6;
-        table_pixels[6] = moyenne_7;
-        table_pixels[7] = moyenne_8;
-        table_pixels[8] = moyenne_9;
-        table_pixels[9] = moyenne_10;
+        // calcul de la moyenne
+        for (int i{0}; i < nb_couleurs; i++)
+        {
+            table_pixels[i] = calcul_distance(groupes[i]);
+        }
     }
     // on a finit les groupes, on passe maintenant par tous les pixels pour que les groupes soient tous de la même couleur
     for (int x{0}; x < image.width(); x++)
@@ -652,50 +551,269 @@ void k_means(sil::Image &image)
 
                 distance_fin.push_back(glm::distance(color1, colora));
             }
-                if (distance_fin[0] <= distance_fin[1] && distance_fin[0] <= distance_fin[2] && distance_fin[0] <= distance_fin[3]&& distance_fin[0] <= distance_fin[4]&& distance_fin[0] <= distance_fin[5]&& distance_fin[0] <= distance_fin[6]&& distance_fin[0] <= distance_fin[7]&& distance_fin[0] <= distance_fin[8]&& distance_fin[0] <= distance_fin[9])
+            // même boucle que avant pour éviter de faire des if, else à rallonge
+            int indice = 0;
+            for (int i{1}; i < nb_couleurs; i++)
+            {
+                if (distance_fin[i] < distance_fin[indice])
                 {
-                    image.pixel(x, y) = table_pixels[0];
+                    indice = i;
                 }
-                else if (distance_fin[1] <= distance_fin[0] && distance_fin[1] <= distance_fin[2] && distance_fin[1] <= distance_fin[3]&& distance_fin[1] <= distance_fin[4]&& distance_fin[1] <= distance_fin[5]&& distance_fin[1] <= distance_fin[6]&& distance_fin[1] <= distance_fin[7]&& distance_fin[1] <= distance_fin[8]&& distance_fin[1] <= distance_fin[9])
+            }
+
+            image.pixel(x, y) = table_pixels[indice];
+        }
+    }
+    return image;
+}
+
+int kmeans_compatibilite_calcul(sil::Image &image)
+{
+    sil::Image n_image1 = k_means(image);
+
+    int nb_couleurs = 10;
+
+    std::vector<std::vector<glm::vec3>> groupes(nb_couleurs);
+
+    std::vector<glm::vec3> couleurs_autre;
+
+    glm::vec3 new_depart{n_image1.pixel(0, 0)};
+    for (int i{0}; i < nb_couleurs; i++)
+    {
+        couleurs_autre.push_back(new_depart);
+
+        bool prochaine_couleur = false;
+
+        glm::vec3 new_depart2{0};
+        for (int x{0}; x < n_image1.width(); x++)
+        {
+            for (int y{0}; y < n_image1.height(); y++)
+            {
+                if (glm::vec3{n_image1.pixel(x, y)} == new_depart)
                 {
-                    image.pixel(x, y) = table_pixels[1];
+                    groupes[i].push_back(n_image1.pixel(x, y));
                 }
-                else if (distance_fin[2] <= distance_fin[1] && distance_fin[2] <= distance_fin[0] && distance_fin[2] <= distance_fin[3]&& distance_fin[2] <= distance_fin[4]&& distance_fin[2] <= distance_fin[5]&& distance_fin[2] <= distance_fin[6]&& distance_fin[2] <= distance_fin[7]&& distance_fin[2] <= distance_fin[8]&& distance_fin[2] <= distance_fin[9])
+                else if (!prochaine_couleur)
                 {
-                    image.pixel(x, y) = table_pixels[2];
-                }
-                else if (distance_fin[3] <= distance_fin[0] && distance_fin[3] <= distance_fin[1] && distance_fin[3] <= distance_fin[2]&& distance_fin[3] <= distance_fin[4]&& distance_fin[3] <= distance_fin[5]&& distance_fin[3] <= distance_fin[6]&& distance_fin[3] <= distance_fin[7]&& distance_fin[3] <= distance_fin[8]&& distance_fin[3] <= distance_fin[9])
-                {
-                    image.pixel(x, y) = table_pixels[3];
-                }
-                else if (distance_fin[4] <= distance_fin[0] && distance_fin[4] <= distance_fin[1] && distance_fin[4] <= distance_fin[2]&& distance_fin[4] <= distance_fin[3]&& distance_fin[4] <= distance_fin[5]&& distance_fin[4] <= distance_fin[6]&& distance_fin[4] <= distance_fin[7]&& distance_fin[4] <= distance_fin[8]&& distance_fin[4] <= distance_fin[9])
-                {
-                    image.pixel(x, y) = table_pixels[4];
-                }
-                else if (distance_fin[5] <= distance_fin[0] && distance_fin[5] <= distance_fin[1] && distance_fin[5] <= distance_fin[2]&& distance_fin[5] <= distance_fin[4]&& distance_fin[5] <= distance_fin[3]&& distance_fin[5] <= distance_fin[6]&& distance_fin[5] <= distance_fin[7]&& distance_fin[5] <= distance_fin[8]&& distance_fin[5] <= distance_fin[9])
-                {
-                    image.pixel(x, y) = table_pixels[5];
-                }
-                else if (distance_fin[6] <= distance_fin[0] && distance_fin[6] <= distance_fin[1] && distance_fin[6] <= distance_fin[2]&& distance_fin[6] <= distance_fin[4]&& distance_fin[6] <= distance_fin[5]&& distance_fin[6] <= distance_fin[3]&& distance_fin[6] <= distance_fin[7]&& distance_fin[6] <= distance_fin[8]&& distance_fin[6] <= distance_fin[9])
-                {
-                    image.pixel(x, y) = table_pixels[6];
-                }
-                else if (distance_fin[7] <= distance_fin[0] && distance_fin[7] <= distance_fin[1] && distance_fin[7] <= distance_fin[2]&& distance_fin[7] <= distance_fin[4]&& distance_fin[7] <= distance_fin[5]&& distance_fin[7] <= distance_fin[6]&& distance_fin[7] <= distance_fin[3]&& distance_fin[7] <= distance_fin[8]&& distance_fin[7] <= distance_fin[9])
-                {
-                    image.pixel(x, y) = table_pixels[7];
-                }
-                else if (distance_fin[8] <= distance_fin[0] && distance_fin[8] <= distance_fin[1] && distance_fin[8] <= distance_fin[2]&& distance_fin[3] <= distance_fin[4]&& distance_fin[3] <= distance_fin[5]&& distance_fin[8] <= distance_fin[6]&& distance_fin[8] <= distance_fin[7]&& distance_fin[8] <= distance_fin[3]&& distance_fin[8] <= distance_fin[9])
-                {
-                    image.pixel(x, y) = table_pixels[8];
-                }
-                else
-                {
-                    image.pixel(x, y) = table_pixels[9];
+                    bool prise = false;
+                    for (std::size_t k{0}; k < couleurs_autre.size(); k++)
+                    {
+                        if (n_image1.pixel(x, y) == couleurs_autre[k])
+                        {
+                            prise = true;
+                            break;
+                        }
+                    }
+                    if (!prise)
+                    {
+                        new_depart2 = n_image1.pixel(x, y);
+                        prochaine_couleur = true;
+                    }
                 }
             }
         }
-    }
 
+        if (!prochaine_couleur)
+        {
+            break;
+        }
+        new_depart = new_depart2;
+    }
+    int nb_couleur{0};
+    std::vector<float> table_couleurs;
+    for (int a{0}; a < nb_couleurs; a++)
+    {
+        if (!groupes[a].empty()) // Sécurité si l'image a moins de 10 couleurs
+        {
+            int nombre_reccurence{0};
+
+            for (std::size_t i{0}; i < groupes[a].size(); i++)
+            {
+
+                nombre_reccurence++;
+            }
+            float somme = somme_couleur(groupes[a][0]);
+            nb_couleur = nombre_reccurence * somme;
+            table_couleurs.push_back(nb_couleur);
+        }
+    }
+    int somme_finale{0};
+    for (std::size_t i{0}; i < table_couleurs.size(); i++)
+    {
+
+        somme_finale += table_couleurs[i];
+    }
+    return somme_finale;
+}
+int kmeans_compatibilite(int a, int b)
+{
+    int difference{0};
+
+    if (a < b)
+    {
+        difference = b - a;
+    }
+    else
+    {
+        difference = a - b;
+    }
+    return difference;
+}
+
+glm::vec2 rotated(glm::vec2 point, glm::vec2 center_of_rotation, float angle)
+{
+    return glm::vec2{glm::rotate(glm::mat3{1.f}, angle) * glm::vec3{point - center_of_rotation, 0.f}} + center_of_rotation;
+}
+
+void vortex(sil::Image &image)
+{
+    sil::Image copie{image.width(), image.height()};
+    float pi = 3.14159265f;
+    glm::vec2 centre_of_rotation = {368, 244};
+    float angle = 4 * pi;
+    for (int x{0}; x < image.width(); x++)
+    {
+        for (int y{0}; y < image.height(); y++)
+        {
+            glm::vec2 position{x, y};
+
+            float distance = glm::distance(position, centre_of_rotation);
+            // plus on s'éloigne moins ça bouge, donc fonction exp inversé par rapport à la distance par rapport au centre
+            float coulee = angle * std::exp(-distance / 488);
+
+            glm::vec2 position_d = rotated(position, centre_of_rotation, -coulee);
+            int V = position_d.x;
+            int W = position_d.y;
+
+            // il ne faut pas que ça dépasse de l'image
+
+            if (V >= 0 && V < image.width() && W >= 0 && W < image.height())
+            {
+
+                copie.pixel(x, y) = image.pixel(V, W);
+            }
+        }
+    }
+    image = copie;
+}
+
+void convultion(sil::Image &image)
+{
+    sil::Image copie{image.width(), image.height()};
+    std::vector<glm::vec3> tableau_cube;
+    for (int x{0}; x < image.width(); x++)
+    {
+        tableau_cube.clear();
+        for (int y{0}; y < image.height(); y++)
+        {
+            if ((x + 1) < image.width() && (x - 1) > 0)
+            {
+                if ((y + 1) < image.height() && (y - 1) > 0)
+                {
+                    tableau_cube.push_back(image.pixel(x, y));
+                    tableau_cube.push_back(image.pixel(x - 1, y - 1));
+                    tableau_cube.push_back(image.pixel(x, y - 1));
+                    tableau_cube.push_back(image.pixel(x + 1, y - 1));
+                    tableau_cube.push_back(image.pixel(x + 1, y));
+                    tableau_cube.push_back(image.pixel(x + 1, y + 1));
+                    tableau_cube.push_back(image.pixel(x, y + 1));
+                    tableau_cube.push_back(image.pixel(x - 1, y + 1));
+                    tableau_cube.push_back(image.pixel(x - 1, y));
+                }
+            }
+            glm::vec3 moyenne = calcul_distance(tableau_cube);
+            copie.pixel(x, y) = moyenne;
+        }
+    }
+    image = copie;
+}
+
+void convolution(sil::Image &image)
+{
+    sil::Image copie{image.width(), image.height()};
+    float flou = 9.f;
+    for (int x{1}; x < image.width() - 1; x++)
+    {
+        for (int y{1}; y < image.height() - 1; y++)
+        {
+            copie.pixel(x - 1, y - 1) = image.pixel(x, y) / flou + image.pixel(x + 1, y + 1) / flou +
+                                        image.pixel(x + 1, y) / flou + image.pixel(x + 1, y - 1) / flou + image.pixel(x, y + 1) / flou +
+                                        image.pixel(x, y - 1) / flou + image.pixel(x - 1, y - 1) / flou + image.pixel(x - 1, y) / flou +
+                                        image.pixel(x - 1, y + 1) / flou;
+        }
+    }
+    image = copie;
+}
+
+sil::Image fractale(sil::Image &image)
+{
+    std::vector<glm::vec3> repetition_pixel;
+
+    for (int x{1}; x < image.width() - 1; x++)
+    {
+        for (int y{1}; y < image.height() - 1; y++)
+        {
+            std::complex<float> z{0, 0};
+            std::complex<float> c{x / 200.f - 2, y / 200.f - 1.2};
+            int repetition{0};
+            for (int a{0}; a < 50; a++)
+            {
+                if (std::abs(z) < 2)
+                {
+                    z = z * z + c;
+                    repetition++;
+                }
+                else
+                {
+
+                    if (repetition > 50)
+                    {
+                        image.pixel(x, y) = glm::vec3{0, 0, 0};
+                    }
+                    else if (repetition > 30 && repetition < 40)
+                    {
+                        image.pixel(x, y) = glm::vec3{0, 0, 0};
+                    }
+                    else if (repetition > 20 && repetition < 30)
+                    {
+                        image.pixel(x, y) = glm::vec3{0, 0, 0};
+                    }
+                    else if (repetition > 10 && repetition < 20)
+                    {
+                        image.pixel(x, y) = glm::vec3{0, 0, 0};
+                    }
+                    else if (repetition < 10)
+                    {
+                        image.pixel(x, y) = glm::vec3{0, 0, 0};
+                    }
+                    break;
+                }
+            }
+            if (std::abs(z) < 2)
+            {
+                image.pixel(x, y) = glm::vec3{1, 1, 1};
+            }
+        }
+    }
+    return image;
+}
+
+sil::Image fractale_ds_image(sil::Image &image, sil::Image &image2)
+{
+    sil::Image new_image = fractale(image);
+
+    for (int x{0}; x < new_image.width(); x++)
+    {
+        for (int y{0}; y < new_image.height(); y++)
+        {
+            if (new_image.pixel(x, y) == glm::vec3{1, 1, 1})
+            {
+                new_image.pixel(x, y) = image2.pixel(x, y);
+            }
+        }
+    }
+    return new_image;
+}
 int main()
 {
     // 736, 488
@@ -780,11 +898,11 @@ int main()
     //          image.save("output/gif/" + nomfichier + ".png");
     //      }
     //  }
-    //  {
-    //      sil::Image image{500 /*width*/, 500 /*height*/}; // Lis l'image
-    //      rosace(image);                                   // Utilise la fonction pour modifier l'image
-    //      image.save("output/rosace.png");
-    //  }
+    // {
+    //     sil::Image image{500 /*width*/, 500 /*height*/}; // Lis l'image
+    //     rosace(image);                                   // Utilise la fonction pour modifier l'image
+    //     image.save("output/rosace.png");
+    // }
     //  {
     //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
     //      mosa(image);                                       // Utilise la fonction pour modifier l'image
@@ -805,9 +923,37 @@ int main()
     //     tri(image);                                        // Utilise la fonction pour modifier l'image
     //     image.save("output/tri.png");                      // Sauvegarde l'image
     // }
+    // {
+    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+    //     k_means(image);                                    // Utilise la fonction pour modifier l'image
+    //     image.save("output/kmeans.png");                   // Sauvegarde l'image
+    // }
+    // {
+    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+    //     vortex(image);                                     // Utilise la fonction pour modifier l'image
+    //     image.save("output/vortex.png");                   // Sauvegarde l'image
+    // }
+    // {
+    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+    //     convultion(image);                                 // Utilise la fonction pour modifier l'image
+    //     image.save("output/convultion.png");               // Sauvegarde l'image
+    // }
+    // {
+    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+    //     convolution(image);                                // Utilise la fonction pour modifier l'image
+    //     image.save("output/convolution.png");              // Sauvegarde l'image
+    // }
+
+    // {
+    //     sil::Image image{736, 488};
+    //     sil::Image image2{"images/Gumball and Darwin.jpg"};
+    //     fractale_ds_image(image, image2);
+    //     image.save("output/fractale_ds.png");
+    // }
     {
-        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-        k_means(image);                                    // Utilise la fonction pour modifier l'image
-        image.save("output/kmeans.png");                   // Sauvegarde l'image
+        sil::Image image{20, 20};
+        sil::Image image2{20, 20};
+        std::cout << kmeans_compatibilite(kmeans_compatibilite_calcul(image), kmeans_compatibilite_calcul(image2)) << std::endl;
+        ;
     }
 }
