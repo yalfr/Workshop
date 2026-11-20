@@ -176,7 +176,7 @@ void splitfaux(sil::Image &image)
     image = copie;
 }
 
-void split(sil::Image &image)
+sil::Image split(sil::Image &image, int decalage)
 {
     glm::vec3 black{0, 0, 0};
     sil::Image copie{image.width(), image.height()};
@@ -188,19 +188,48 @@ void split(sil::Image &image)
             {
                 copie.pixel(x, y).g = image.pixel(x, y).g;
 
-                if (x + 20 < copie.width())
+                if (x + decalage < copie.width())
                 {
-                    copie.pixel(x + 20, y).r = image.pixel(x, y).r;
+                    copie.pixel(x + decalage, y).r = image.pixel(x, y).r;
                 }
 
-                if (x - 20 >= 0)
+                if (x - decalage >= 0)
                 {
-                    copie.pixel(x - 20, y).b = image.pixel(x, y).b;
+                    copie.pixel(x - decalage, y).b = image.pixel(x, y).b;
                 }
             }
         }
     }
     image = copie;
+    return image;
+}
+
+sil::Image split_h(sil::Image &image, int decalage)
+{
+    glm::vec3 black{0, 0, 0};
+    sil::Image copie{image.width(), image.height()};
+    for (int x{0}; x < image.width(); x++)
+    {
+        for (int y{0}; y < image.height(); y++)
+        {
+            if (image.pixel(x, y) != black)
+            {
+                copie.pixel(x, y).g = image.pixel(x, y).g;
+
+                if (y + decalage < copie.width())
+                {
+                    copie.pixel(x, y + decalage).r = image.pixel(x, y).r;
+                }
+
+                if (y - decalage >= 0)
+                {
+                    copie.pixel(x, y - decalage).b = image.pixel(x, y).b;
+                }
+            }
+        }
+    }
+    image = copie;
+    return image;
 }
 
 float aug(glm::vec3 color)
@@ -400,7 +429,7 @@ void mosam(sil::Image &image)
     image = copie;
 }
 
-void glitch(sil::Image &image)
+sil::Image glitch(sil::Image &image)
 {
     for (int a{0}; a < 100; a++)
     {
@@ -416,15 +445,27 @@ void glitch(sil::Image &image)
         {
             for (int b{0}; b < H; b++)
             {
-                image.pixel(X + a, Y + b) = image.pixel(Xp + a, Yp + b);
+                if ((X + a) < image.width() && (Y + b) < image.height() && (Xp + a) < image.width() && (Yp + a) < image.height())
+                {
+                    image.pixel(X + a, Y + b) = image.pixel(Xp + a, Yp + b);
+                }
             }
         }
     }
+    return image;
 }
 
 float somme_couleur(glm::vec3 color)
 {
-    float somme = color.x + color.y + color.z;
+
+    float somme = (color.x) + (color.y) + (color.z);
+    return (somme);
+}
+
+float somme_couleur_kmeans(glm::vec3 color)
+{
+    // pour que les couleurs soient comprises entre 0 et 7 donc pour que dans le calcul final un bleu pur et un vert pur ne donnent pas le même résultat
+    float somme = (color.x * 1.0f) + (color.y * 2.0f) + (color.z * 4.0f);
     return (somme);
 }
 
@@ -435,16 +476,19 @@ void tri_w(sil::Image &image)
         std::vector<int> tableau_couleur;
         for (int x{0}; x < image.width() - 1; x++)
         {
-
-            for (int i{x}; i >= 0 && somme_couleur(image.pixel(i, y)) > somme_couleur(image.pixel(i + 1, y)); i--)
+            if (x + 1 < image.width())
             {
-                std::swap(image.pixel(i, y), image.pixel(i + 1, y));
+
+                for (int i{x}; i >= 0 && somme_couleur(image.pixel(i, y)) > somme_couleur(image.pixel(i + 1, y)); i--)
+                {
+                    std::swap(image.pixel(i, y), image.pixel(i + 1, y));
+                }
             }
         }
     }
 }
 
-void tri(sil::Image &image)
+sil::Image tri(sil::Image &image)
 {
     tri_w(image);
     for (int x{0}; x < image.width(); x++)
@@ -452,13 +496,17 @@ void tri(sil::Image &image)
         std::vector<int> tableau_couleur;
         for (int y{0}; y < image.height(); y++)
         {
-
-            for (int i{y}; i >= 0 && somme_couleur(image.pixel(x, i)) > somme_couleur(image.pixel(x, i + 1)); i--)
+            if (y + 1 < image.height())
             {
-                std::swap(image.pixel(x, i), image.pixel(x, i + 1));
+
+                for (int i{y}; i >= 0 && somme_couleur(image.pixel(x, i)) > somme_couleur(image.pixel(x, i + 1)); i--)
+                {
+                    std::swap(image.pixel(x, i), image.pixel(x, i + 1));
+                }
             }
         }
     }
+    return image;
 }
 
 glm::vec3 calcul_distance(std::vector<glm::vec3> table)
@@ -480,7 +528,7 @@ glm::vec3 calcul_distance(std::vector<glm::vec3> table)
     }
 }
 
-sil::Image k_means(sil::Image &image)
+sil::Image k_means(sil::Image image)
 {
     // genere aléatoirement des pixels de départ pour faire des groupes autour
     int nb_couleurs = 10;
@@ -566,20 +614,22 @@ sil::Image k_means(sil::Image &image)
     }
     return image;
 }
-
-int kmeans_compatibilite_calcul(sil::Image &image)
+// on met tout en float pour ne pas perdre de données
+float kmeans_compatibilite_calcul(sil::Image &image)
 {
+    //on applique k-means
     sil::Image n_image1 = k_means(image);
 
     int nb_couleurs = 10;
-
+//pour éviter de faire 10 groupes d'un coup 
     std::vector<std::vector<glm::vec3>> groupes(nb_couleurs);
 
     std::vector<glm::vec3> couleurs_autre;
-
+//parcourir l'image pixel par pixel, on part du premier et si le suivant est différent du premier on le met comme prochaine couleur de depart pour recommencer la boucle et analyser un nouveau groupe
     glm::vec3 new_depart{n_image1.pixel(0, 0)};
     for (int i{0}; i < nb_couleurs; i++)
     {
+        //comme ça on réanalyse pas cette couleur de départ
         couleurs_autre.push_back(new_depart);
 
         bool prochaine_couleur = false;
@@ -589,13 +639,16 @@ int kmeans_compatibilite_calcul(sil::Image &image)
         {
             for (int y{0}; y < n_image1.height(); y++)
             {
+                //si c'est égal a la couleur du groupe
                 if (glm::vec3{n_image1.pixel(x, y)} == new_depart)
                 {
                     groupes[i].push_back(n_image1.pixel(x, y));
                 }
+                //sinon si c'est différent de prochaine couleur
                 else if (!prochaine_couleur)
                 {
                     bool prise = false;
+                    //on parcours toutes les couleurs qu'on a déjà faites
                     for (std::size_t k{0}; k < couleurs_autre.size(); k++)
                     {
                         if (n_image1.pixel(x, y) == couleurs_autre[k])
@@ -604,6 +657,7 @@ int kmeans_compatibilite_calcul(sil::Image &image)
                             break;
                         }
                     }
+                    //si c'est faux on le met en prochaine couleur de départ
                     if (!prise)
                     {
                         new_depart2 = n_image1.pixel(x, y);
@@ -619,45 +673,38 @@ int kmeans_compatibilite_calcul(sil::Image &image)
         }
         new_depart = new_depart2;
     }
-    int nb_couleur{0};
     std::vector<float> table_couleurs;
     for (int a{0}; a < nb_couleurs; a++)
     {
-        if (!groupes[a].empty()) // Sécurité si l'image a moins de 10 couleurs
+        if (!groupes[a].empty()) // si moins de 10 couleurs
         {
-            int nombre_reccurence{0};
 
-            for (std::size_t i{0}; i < groupes[a].size(); i++)
-            {
-
-                nombre_reccurence++;
-            }
-            float somme = somme_couleur(groupes[a][0]);
-            nb_couleur = nombre_reccurence * somme;
-            table_couleurs.push_back(nb_couleur);
+            float nombre_reccurence = static_cast<float>(groupes[a].size());//on converti car tout est en float
+            float somme = somme_couleur_kmeans(groupes[a][0]);//somme pixel par  pixel dans chaque groupe
+            table_couleurs.push_back(nombre_reccurence * somme);
         }
     }
-    int somme_finale{0};
+
+    float somme_finale{0};
     for (std::size_t i{0}; i < table_couleurs.size(); i++)
     {
 
         somme_finale += table_couleurs[i];
     }
-    return somme_finale;
+    // on divise par le nombre de pixels comme ça deux images de taille différentes donnent un pourcentage représentatif
+    float total_pixels = static_cast<float>(n_image1.width() * n_image1.height());
+    return somme_finale / total_pixels;
 }
-int kmeans_compatibilite(int a, int b)
-{
-    int difference{0};
 
-    if (a < b)
-    {
-        difference = b - a;
-    }
-    else
-    {
-        difference = a - b;
-    }
-    return difference;
+float kmeans_compatibilite(float a, float b)
+{
+    const float valeur_max = 7.0f; //score maximum possible
+    float difference = std::abs(a - b);//pour eviter d'avoir une valeur négative 
+
+    // on inverse pour avoir un pourcentage de ressemblance et pas l'inverse, on le met en pourcentage
+    //différence/valeur max donne l'écart entre les images
+    float compatibilite = (1.0f - (difference / valeur_max)) * 100.0f;
+    return compatibilite;
 }
 
 glm::vec2 rotated(glm::vec2 point, glm::vec2 center_of_rotation, float angle)
@@ -665,12 +712,12 @@ glm::vec2 rotated(glm::vec2 point, glm::vec2 center_of_rotation, float angle)
     return glm::vec2{glm::rotate(glm::mat3{1.f}, angle) * glm::vec3{point - center_of_rotation, 0.f}} + center_of_rotation;
 }
 
-void vortex(sil::Image &image)
+void vortex(sil::Image &image, float angle)
 {
     sil::Image copie{image.width(), image.height()};
     float pi = 3.14159265f;
     glm::vec2 centre_of_rotation = {368, 244};
-    float angle = 4 * pi;
+    angle = angle * pi;
     for (int x{0}; x < image.width(); x++)
     {
         for (int y{0}; y < image.height(); y++)
@@ -697,14 +744,47 @@ void vortex(sil::Image &image)
     image = copie;
 }
 
-void convultion(sil::Image &image)
+sil::Image vortex_inv(sil::Image &image, float angle)
+{
+    sil::Image copie{image.width(), image.height()};
+    float pi = 3.14159265f;
+    glm::vec2 centre_of_rotation = {368, 244};
+    angle = angle * pi;
+    for (int x{0}; x < image.width(); x++)
+    {
+        for (int y{0}; y < image.height(); y++)
+        {
+            glm::vec2 position{x, y};
+
+            float distance = glm::distance(position, centre_of_rotation);
+            // plus on s'éloigne moins ça bouge, donc fonction exp inversé par rapport à la distance par rapport au centre
+            float coulee = angle * std::exp(distance / 488);
+
+            glm::vec2 position_d = rotated(position, centre_of_rotation, -coulee);
+            int V = position_d.x;
+            int W = position_d.y;
+
+            // il ne faut pas que ça dépasse de l'image
+
+            if (V >= 0 && V < image.width() && W >= 0 && W < image.height())
+            {
+
+                copie.pixel(x, y) = image.pixel(V, W);
+            }
+        }
+    }
+    image = copie;
+    return image;
+}
+
+sil::Image convultion(sil::Image &image, int taille)
 {
     sil::Image copie{image.width(), image.height()};
     std::vector<glm::vec3> tableau_cube;
     for (int x{0}; x < image.width(); x++)
     {
         tableau_cube.clear();
-        for (int y{0}; y < image.height(); y++)
+        for (int y{0}; y < image.height() / taille; y++)
         {
             if ((x + 1) < image.width() && (x - 1) > 0)
             {
@@ -722,10 +802,42 @@ void convultion(sil::Image &image)
                 }
             }
             glm::vec3 moyenne = calcul_distance(tableau_cube);
-            copie.pixel(x, y) = moyenne;
+            copie.pixel(x, y) = moyenne * 3.f;
+        }
+    }
+    for (int a{0}; a < taille; a++)
+    {
+        if (taille != 1 && taille != 0)
+        {
+
+            for (int x{0}; x < image.width(); x++)
+            {
+                tableau_cube.clear();
+                for (int y{a * image.height() / taille}; y < image.height(); y++)
+                {
+                    if ((x + 1) < image.width() && (x - 1) > 0)
+                    {
+                        if ((y + 1) < image.height() && (y - 1) > 0)
+                        {
+                            tableau_cube.push_back(image.pixel(x, y));
+                            tableau_cube.push_back(image.pixel(x - 1, y - 1));
+                            tableau_cube.push_back(image.pixel(x, y - 1));
+                            tableau_cube.push_back(image.pixel(x + 1, y - 1));
+                            tableau_cube.push_back(image.pixel(x + 1, y));
+                            tableau_cube.push_back(image.pixel(x + 1, y + 1));
+                            tableau_cube.push_back(image.pixel(x, y + 1));
+                            tableau_cube.push_back(image.pixel(x - 1, y + 1));
+                            tableau_cube.push_back(image.pixel(x - 1, y));
+                        }
+                    }
+                    glm::vec3 moyenne = calcul_distance(tableau_cube);
+                    copie.pixel(x, y) = moyenne * 3.f;
+                }
+            }
         }
     }
     image = copie;
+    return image;
 }
 
 void convolution(sil::Image &image)
@@ -740,6 +852,22 @@ void convolution(sil::Image &image)
                                         image.pixel(x + 1, y) / flou + image.pixel(x + 1, y - 1) / flou + image.pixel(x, y + 1) / flou +
                                         image.pixel(x, y - 1) / flou + image.pixel(x - 1, y - 1) / flou + image.pixel(x - 1, y) / flou +
                                         image.pixel(x - 1, y + 1) / flou;
+        }
+    }
+    image = copie;
+}
+
+void convolution_nette(sil::Image &image)
+{
+    sil::Image copie{image.width(), image.height()};
+    for (int x{1}; x < image.width() - 1; x++)
+    {
+        for (int y{1}; y < image.height() - 1; y++)
+        {
+            copie.pixel(x - 1, y - 1) = image.pixel(x, y) * 5.f + image.pixel(x + 1, y + 1) * 0.f +
+                                        image.pixel(x + 1, y) * -1.f + image.pixel(x + 1, y - 1) * 0.f + image.pixel(x, y + 1) * -1.f +
+                                        image.pixel(x, y - 1) * -1.f + image.pixel(x - 1, y - 1) * 0.f + image.pixel(x - 1, y) * -1.f +
+                                        image.pixel(x - 1, y + 1) * 0.f;
         }
     }
     image = copie;
@@ -798,162 +926,186 @@ sil::Image fractale(sil::Image &image)
     return image;
 }
 
-sil::Image fractale_ds_image(sil::Image &image, sil::Image &image2)
+void degrade2(sil::Image &image)
 {
-    sil::Image new_image = fractale(image);
-
-    for (int x{0}; x < new_image.width(); x++)
+    for (int x{0}; x < image.width(); x++)
     {
-        for (int y{0}; y < new_image.height(); y++)
+
+        for (int y{0}; y < image.height(); y++)
         {
-            if (new_image.pixel(x, y) == glm::vec3{1, 1, 1})
-            {
-                new_image.pixel(x, y) = image2.pixel(x, y);
-            }
+            image.pixel(x, y) = glm::vec3{0 + (x * 0.0025), 1 - (x * 0.0025), 0};
         }
     }
-    return new_image;
 }
+
 int main()
 {
-    // 736, 488
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      keep_green_only(image);                            // Utilise la fonction pour modifier l'image
-    //      image.save("output/keep_green_only.png");          // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      channels_swap(image);                              // Utilise la fonction pour modifier l'image
-    //      image.save("output/channels_swap.png");            // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      black_white(image);                                // Utilise la fonction pour modifier l'image
-    //      image.save("output/black_white.png");              // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      negatif(image);                                    // Utilise la fonction pour modifier l'image
-    //      image.save("output/negatif.png");                  // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{400 /*width*/, 200 /*height*/}; // Lis l'image
-    //      degrade(image);                                  // Utilise la fonction pour modifier l'image
-    //      image.save("output/degrade.png");                // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      miroir(image);                                     // Utilise la fonction pour modifier l'image
-    //      image.save("output/miroir.png");                   // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      bruit(image);                                      // Utilise la fonction pour modifier l'image
-    //      image.save("output/bruit.png");                    // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      rotation(image);                                   // Utilise la fonction pour modifier l'image
-    //      image.save("output/rotation.png");                 // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      splitfaux(image);                                  // Utilise la fonction pour modifier l'image
-    //      image.save("output/splitfaux.png");                // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      split(image);                                      // Utilise la fonction pour modifier l'image
-    //      image.save("output/split.png");                    // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      eclair(image);                                     // Utilise la fonction pour modifier l'image
-    //      image.save("output/eclair.png");                   // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{500 /*width*/, 500 /*height*/}; // Lis l'image
-    //      rond(image);                                     // Utilise la fonction pour modifier l'image
-    //      image.save("output/rond.png");                   // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{500 /*width*/, 500 /*height*/}; // Lis l'image
-    //      rondp(image);                                    // Utilise la fonction pour modifier l'image
-    //      image.save("output/rondp.png");                  // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{500, 500};
-    //      int r{0};
-    //      int i{0};
-    //      int centre_x = 0;
-    //      int centre_y = 250;
-    //      int rayon = 25;
-    //      for (r = 0; r < 19; r++)
-    //      {
-    //          centre_x = centre_x + 25;
-    //          gif(image, centre_x, centre_y, rayon);
-    //          // std::string nomfichier = std::vector{"1", "2", "3", "4" , "19"}[r];
-    //          std::string nomfichier = std::to_string(r);
-    //          image.save("output/gif/" + nomfichier + ".png");
-    //      }
-    //  }
-    // {
-    //     sil::Image image{500 /*width*/, 500 /*height*/}; // Lis l'image
-    //     rosace(image);                                   // Utilise la fonction pour modifier l'image
-    //     image.save("output/rosace.png");
-    // }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      mosa(image);                                       // Utilise la fonction pour modifier l'image
-    //      image.save("output/mosa.png");                     // Sauvegarde l'image
-    //  }
-    //  {
-    //      sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //      mosam(image);                                      // Utilise la fonction pour modifier l'image
-    //      image.save("output/mosam.png");                    // Sauvegarde l'image
-    //  }
-    // {
-    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //     glitch(image);                                     // Utilise la fonction pour modifier l'image
-    //     image.save("output/glitch.png");                   // Sauvegarde l'image
-    // }
-    // {
-    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //     tri(image);                                        // Utilise la fonction pour modifier l'image
-    //     image.save("output/tri.png");                      // Sauvegarde l'image
-    // }
-    // {
-    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //     k_means(image);                                    // Utilise la fonction pour modifier l'image
-    //     image.save("output/kmeans.png");                   // Sauvegarde l'image
-    // }
-    // {
-    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //     vortex(image);                                     // Utilise la fonction pour modifier l'image
-    //     image.save("output/vortex.png");                   // Sauvegarde l'image
-    // }
-    // {
-    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //     convultion(image);                                 // Utilise la fonction pour modifier l'image
-    //     image.save("output/convultion.png");               // Sauvegarde l'image
-    // }
-    // {
-    //     sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
-    //     convolution(image);                                // Utilise la fonction pour modifier l'image
-    //     image.save("output/convolution.png");              // Sauvegarde l'image
-    // }
-
-    // {
-    //     sil::Image image{736, 488};
-    //     sil::Image image2{"images/Gumball and Darwin.jpg"};
-    //     fractale_ds_image(image, image2);
-    //     image.save("output/fractale_ds.png");
-    // }
     {
-        sil::Image image{20, 20};
-        sil::Image image2{20, 20};
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        keep_green_only(image);                            // Utilise la fonction pour modifier l'image
+        image.save("output/keep_green_only.png");          // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        channels_swap(image);                              // Utilise la fonction pour modifier l'image
+        image.save("output/channels_swap.png");            // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        black_white(image);                                // Utilise la fonction pour modifier l'image
+        image.save("output/black_white.png");              // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        negatif(image);                                    // Utilise la fonction pour modifier l'image
+        image.save("output/negatif.png");                  // Sauvegarde l'image
+    }
+    {
+        sil::Image image{400 /*width*/, 200 /*height*/}; // Lis l'image
+        degrade(image);                                  // Utilise la fonction pour modifier l'image
+        image.save("output/degrade.png");                // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        miroir(image);                                     // Utilise la fonction pour modifier l'image
+        image.save("output/miroir.png");                   // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        bruit(image);                                      // Utilise la fonction pour modifier l'image
+        image.save("output/bruit.png");                    // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        rotation(image);                                   // Utilise la fonction pour modifier l'image
+        image.save("output/rotation.png");                 // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        splitfaux(image);                                  // Utilise la fonction pour modifier l'image
+        image.save("output/splitfaux.png");                // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        split(image, 30);                                  // Utilise la fonction pour modifier l'image
+        image.save("output/split.png");                    // Sauvegarde l'image
+    }
+    {
+        sil::Image image{500, 500}; // Lis l'image
+        sil::Image image2 = fractale(image);
+        image2 = split_h(image2, 100);
+        image2 = convultion(image2, 1);
+        image2 = split(image2, 100);
+        image2 = tri(image2);
+
+        image2.save("output/split2.png");
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        eclair(image);                                     // Utilise la fonction pour modifier l'image
+        image.save("output/eclair.png");                   // Sauvegarde l'image
+    }
+    {
+        sil::Image image{500 /*width*/, 500 /*height*/}; // Lis l'image
+        rond(image);                                     // Utilise la fonction pour modifier l'image
+        image.save("output/rond.png");                   // Sauvegarde l'image
+    }
+    {
+        sil::Image image{500 /*width*/, 500 /*height*/}; // Lis l'image
+        rondp(image);                                    // Utilise la fonction pour modifier l'image
+        image.save("output/rondp.png");                  // Sauvegarde l'image
+    }
+    {
+        sil::Image image{500, 500};
+        int r{0};
+        int i{0};
+        int centre_x = 0;
+        int centre_y = 250;
+        int rayon = 25;
+        for (r = 0; r < 19; r++)
+        {
+            centre_x = centre_x + 25;
+            gif(image, centre_x, centre_y, rayon);
+            std::string nomfichier = std::to_string(r);
+            image.save("output/gif/" + nomfichier + ".png");
+        }
+    }
+    {
+        sil::Image image{500 /*width*/, 500 /*height*/}; // Lis l'image
+        rosace(image);                                   // Utilise la fonction pour modifier l'image
+        image.save("output/rosace.png");
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        mosa(image);                                       // Utilise la fonction pour modifier l'image
+        image.save("output/mosa.png");                     // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        mosam(image);                                      // Utilise la fonction pour modifier l'image
+        image.save("output/mosam.png");                    // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        glitch(image);                                     // Utilise la fonction pour modifier l'image
+        image.save("output/glitch.png");                   // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        tri(image);                                        // Utilise la fonction pour modifier l'image
+        image.save("output/tri.png");                      // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        image = k_means(image);                                    // Utilise la fonction pour modifier l'image
+        image.save("output/kmeans.png");                   // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        vortex(image, 4);                                  // Utilise la fonction pour modifier l'image
+        image.save("output/vortex.png");                   // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        vortex_inv(image, 4);                              // Utilise la fonction pour modifier l'image
+        image.save("output/vortex_inverse.png");           // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"};
+        image = convultion(image, 1);        // Utilise la fonction pour modifier l'image
+        image.save("output/convultion.png"); // Sauvegarde l'image
+    }
+    {
+        sil::Image image1{500 /*width*/, 500 /*height*/};
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        image1 = fractale(image1);
+        image1 = split_h(image1, 150);
+        image1 = convultion(image1, 3);
+        image1 = vortex_inv(image1, 4);  
+        image1 = convultion(image1, 3);               // Utilise la fonction pour modifier l'image
+        image1.save("output/convultion2.png"); // Sauvegarde l'image
+    }
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        convolution(image);                                // Utilise la fonction pour modifier l'image
+        image.save("output/convolution.png");              // Sauvegarde l'image
+    }
+
+    {
+        sil::Image image{"images/logo.png"};
+        sil::Image image2{"images/Gumball and Darwin.jpg"};
         std::cout << kmeans_compatibilite(kmeans_compatibilite_calcul(image), kmeans_compatibilite_calcul(image2)) << std::endl;
         ;
+    }
+    {
+        sil::Image image{400 /*width*/, 200 /*height*/}; // Lis l'image
+        degrade2(image);                                 // Utilise la fonction pour modifier l'image
+        image.save("output/degrade2.png");               // Sauvegarde l'image
+    }
+
+    {
+        sil::Image image{"images/Gumball and Darwin.jpg"}; // Lis l'image
+        convolution_nette(image);                          // Utilise la fonction pour modifier l'image
+        image.save("output/convolutionnette.png");         // Sauvegarde l'image
     }
 }

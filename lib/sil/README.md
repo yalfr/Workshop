@@ -2,11 +2,12 @@
 
 *sil* is a minimalistic library that allows you to load an image, edit its pixels, and save it back.
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [Examples](#examples)
-  - [Removing the red channel](#removing-the-red-channel)
-  - [Drawing a gradient from left to right](#drawing-a-gradient-from-left-to-right)
+- [Simple-Image-Lib](#simple-image-lib)
+  - [Installation](#installation)
+  - [Usage](#usage)
+  - [Examples](#examples)
+    - [Removing the red channel](#removing-the-red-channel)
+    - [Drawing a gradient from left to right](#drawing-a-gradient-from-left-to-right)
 
 ## Installation
 
